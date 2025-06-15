@@ -1,0 +1,45 @@
+/* Button base styles */
+button,
+.button {
+  /* ...existing code... */
+
+  /* Remove focus outline */
+  outline: none;
+}
+
+/* Remove outline on focus - but keep it accessible */
+button:focus,
+.button:focus {
+  outline: none;
+  box-shadow: none; /* Remove any box-shadow on focus */
+}
+
+/* Use focus-visible for accessibility (only show focus for keyboard navigation) */
+button:focus-visible,
+.button:focus-visible {
+  /* You can add a subtle accessible focus style here if needed */
+  outline: 2px solid rgba(0, 0, 0, 0.2);
+  outline-offset: 2px;
+}
+
+/* Remove the white edge/outline in various states */
+button:active,
+.button:active,
+button:hover,
+.button:hover {
+  outline: none;
+  box-shadow: none;
+}
+
+/* If you're using a framework like Material-UI, Bootstrap, etc, add framework-specific overrides */
+/* Example for Material-UI */
+.MuiButton-root:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* For iOS Safari - prevent the tap highlight color */
+button,
+.button {
+  -webkit-tap-highlight-color: transparent;
+}

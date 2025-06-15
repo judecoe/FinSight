@@ -18,12 +18,10 @@ const Navbar = ({ user, onLogin, onLogout }) => {
     <nav className="bg-gray-800 border-b border-gray-700">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo/Brand with hover animation */}
           <div className="flex-shrink-0 text-blue-400 font-bold text-xl transition-all duration-300 hover:text-blue-300 cursor-pointer">
             FinSight
           </div>
 
-          {/* Login/User section with animations */}
           <div>
             {user ? (
               <div className="relative">

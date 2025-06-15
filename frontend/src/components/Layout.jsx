@@ -9,7 +9,6 @@ const sidebarLinks = [
 
 const Layout = ({ children }) => (
   <div className="flex min-h-screen bg-gray-50">
-    {/* Sidebar */}
     <aside className="w-64 bg-white shadow-md flex flex-col">
       <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 border-b">
         FinanceDash
@@ -29,13 +28,10 @@ const Layout = ({ children }) => (
         </ul>
       </nav>
     </aside>
-    {/* Main content area */}
     <div className="flex-1 flex flex-col">
-      {/* Top nav */}
       <header className="h-16 bg-white shadow flex items-center px-6 justify-between">
         <div className="font-semibold text-lg text-gray-800">Dashboard</div>
         <div className="flex items-center gap-4">
-          {/* Placeholder for user/account info */}
           <span className="text-gray-600">Hello, User</span>
           <img
             src="https://i.pravatar.cc/32"
@@ -44,7 +40,6 @@ const Layout = ({ children }) => (
           />
         </div>
       </header>
-      {/* Page content */}
       <main className="flex-1 p-6">{children}</main>
     </div>
   </div>

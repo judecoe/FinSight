@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.api import router as api_router
-from app.db.session import engine, Base
+from app.core.config import settings
 
-Base.metadata.create_all(bind=engine)
+app = FastAPI(title="FinSight API", openapi_url=f"{settings.API_V1_STR}/openapi.json")
 
-app = FastAPI()
-
-origins = ["http://localhost:5173"]  # Update for Vercel domain on deployment
+# Set up CORS
+origins = [
+    "http://localhost:5173",  # React dev server
+    "http://localhost:4173",  # Vite preview
+    # Add additional origins for production
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,4 +20,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
+# Include API router
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Import routers
+from app.routers import banking
+
+# Include routers
+app.include_router(banking.router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to FinSight API"}

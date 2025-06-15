@@ -21,11 +21,11 @@ const Modal = ({ isOpen, onClose, children }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md mx-4"
+        className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md mx-4 animate-fadeInDown"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-end">

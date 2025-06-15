@@ -71,7 +71,13 @@ button:focus-visible {
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure root elements take up full width */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-y: scroll;
+  }
+}
+
 html,
 body,
 #root {
