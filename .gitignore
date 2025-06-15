@@ -34,4 +34,4 @@ node_modules/
 dist/
 
 # Environment variables
-.env
+/backend/.env
