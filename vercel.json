@@ -1,26 +1,13 @@
 {
   "version": 2,
   "name": "finance-dashboard",
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm install",
+  "installCommand": "npm install --prefix frontend",
   "framework": "nextjs",
   "functions": {
     "frontend/pages/api/**/*.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs20.x"
     }
-  },
-  "redirects": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "cookie",
-          "key": "next-auth.session-token"
-        }
-      ],
-      "destination": "/dashboard",
-      "permanent": false
-    }
-  ]
+  }
 }
