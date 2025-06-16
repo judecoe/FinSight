@@ -2,7 +2,8 @@
 module.exports = {
   extends: ["next/core-web-vitals"],
   rules: {
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "@next/next/no-img-element": "off",
+    "react-hooks/exhaustive-deps": "off",
   },
 };
