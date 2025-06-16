@@ -5,12 +5,20 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isBankConnected, setIsBankConnected] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedBankConnection = localStorage.getItem("bankConnected");
+
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    if (storedBankConnection) {
+      setIsBankConnected(JSON.parse(storedBankConnection));
+    }
+
     setLoading(false);
   }, []);
 
@@ -21,11 +29,27 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setIsBankConnected(false);
     localStorage.removeItem("user");
+    localStorage.removeItem("bankConnected");
+  };
+
+  const setBankConnected = (connected) => {
+    setIsBankConnected(connected);
+    localStorage.setItem("bankConnected", JSON.stringify(connected));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        loading,
+        isBankConnected,
+        setBankConnected,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

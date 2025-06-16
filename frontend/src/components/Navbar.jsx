@@ -3,8 +3,13 @@ import { Button } from "./ui";
 import Modal from "./ui/Modal";
 import LoginForm from "./auth/LoginForm";
 
-const Navbar = ({ user, onLogin, onLogout }) => {
-  const [showLoginModal, setShowLoginModal] = useState(false);
+const Navbar = ({
+  user,
+  onLogin,
+  onLogout,
+  showLoginModal,
+  setShowLoginModal,
+}) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogin = (userData) => {
