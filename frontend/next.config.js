@@ -5,12 +5,14 @@ const nextConfig = {
     domains: ["lh3.googleusercontent.com"], // Add Google profile images
   },
   webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      // Suppress webpack cache warnings in development
-      config.infrastructureLogging = {
-        level: "error",
-      };
-    }
+    // Suppress webpack cache warnings in development and production
+    config.infrastructureLogging = {
+      level: "error",
+    };
+
+    // Disable problematic caching that causes snapshot errors
+    config.cache = false;
+
     return config;
   },
   async rewrites() {
