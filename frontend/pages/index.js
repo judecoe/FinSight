@@ -3,10 +3,23 @@ import Head from "next/head";
 import { Card, Chart } from "../src/components/ui";
 import Navbar from "../src/components/Navbar";
 import { useAuth } from "../src/context/AuthContext";
+import { useBankData } from "../src/hooks/useBankData";
 
 export default function Home() {
-  const { user, login, logout, isBankConnected, setBankConnected } = useAuth();
+  const {
+    user,
+    login,
+    logout,
+    isBankConnected,
+    setBankConnected,
+    accessToken,
+    bankData,
+    updateBankData,
+  } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Use the bank data hook for automatic refreshing
+  const { refreshBankData } = useBankData();
 
   // Enhanced scroll animation effect with better options
   useEffect(() => {
@@ -47,56 +60,163 @@ export default function Home() {
     }
 
     try {
-      // Get link token from our mock API
-      const response = await fetch("/api/banking/link-token-public");
+      // Create a non-sensitive user identifier for Plaid
+      // Plaid doesn't allow emails or other sensitive data as client_user_id
+      const generateUserId = (user) => {
+        if (user.id) return `user_${user.id}`;
+        if (user.email) {
+          // Create a simple hash from email without exposing it
+          const emailHash =
+            user.email.split("@")[0] + "_" + Date.now().toString().slice(-6);
+          return `user_${emailHash}`;
+        }
+        return `demo_user_${Date.now()}`;
+      };
+
+      // Get link token from Plaid API
+      const response = await fetch("/api/banking/link-token-public", {
+        headers: {
+          "user-id": generateUserId(user), // Pass non-sensitive user identifier
+        },
+      });
       const data = await response.json();
 
       if (!data.link_token) {
-        console.error("No link token returned");
+        console.error("No link token returned:", data);
+        if (data.error === "Plaid credentials not configured") {
+          const configStatus = data.current_config;
+          const setupMessage =
+            "🔧 Plaid Setup Required\n\n" +
+            "Current Configuration:\n" +
+            `• Client ID configured: ${
+              configStatus?.client_id_set ? "✅" : "❌"
+            }\n` +
+            `• Secret configured: ${configStatus?.secret_set ? "✅" : "❌"}\n` +
+            `• Environment: ${configStatus?.environment || "sandbox"}\n\n` +
+            "To set up Plaid:\n" +
+            "1. Go to: https://dashboard.plaid.com/team/keys\n" +
+            "2. Copy your Client ID and Secret\n" +
+            "3. Update your .env.local file\n" +
+            "4. Restart the development server\n\n" +
+            "For now, would you like to continue with demo mode?";
+
+          const useDemoMode = window.confirm(setupMessage);
+          if (useDemoMode) {
+            return simulatePlaidFlow();
+          }
+          return;
+        }
         return;
       }
 
-      // For demo purposes, simulate the Plaid flow without actually loading Plaid
-      const simulatePlaidFlow = async () => {
-        // Show a confirmation dialog to simulate Plaid's bank selection
-        const confirmed = window.confirm(
-          "This is a demo simulation of Plaid bank connection.\n\n" +
-            "In a real app, this would open Plaid's secure interface.\n\n" +
-            "Click OK to simulate connecting your bank account."
-        );
+      // Load Plaid Link script dynamically
+      const script = document.createElement("script");
+      script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+      script.onload = () => {
+        const handler = window.Plaid.create({
+          token: data.link_token,
+          onSuccess: async (public_token, metadata) => {
+            console.log("Plaid Link successful:", metadata);
 
-        if (!confirmed) {
-          console.log("User cancelled bank connection");
-          return;
-        }
+            try {
+              // Exchange public token for access token
+              const exchangeResponse = await fetch(
+                "/api/banking/set-access-token-public",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ public_token }),
+                }
+              );
 
-        // Simulate successful bank connection
-        const mockPublicToken = "mock_public_token_" + Date.now();
+              const exchangeData = await exchangeResponse.json();
+              console.log("Account connected:", exchangeData);
 
-        // Exchange the mock public token
-        const exchangeResponse = await fetch(
-          "/api/banking/set-access-token-public",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ public_token: mockPublicToken }),
-          }
-        );
+              if (exchangeData.success) {
+                // Store access token and update bank connection status
+                const token = exchangeData.access_token;
+                setBankConnected(true, token);
 
-        const exchangeData = await exchangeResponse.json();
-        console.log("Account connected:", exchangeData);
+                // Fetch real bank data
+                try {
+                  const [accountsResponse, transactionsResponse] =
+                    await Promise.all([
+                      fetch(`/api/banking/accounts?access_token=${token}`),
+                      fetch(`/api/banking/transactions?access_token=${token}`),
+                    ]);
 
-        // Update bank connection status
-        setBankConnected(true);
+                  const accountsData = await accountsResponse.json();
+                  const transactionsData = await transactionsResponse.json();
+
+                  // Update bank data in context
+                  updateBankData({
+                    accounts: accountsData.accounts || [],
+                    transactions: transactionsData.transactions || [],
+                    summary: {
+                      ...accountsData.summary,
+                      ...transactionsData.summary,
+                      monthlySpending: transactionsData.monthlySpending || [],
+                      categoryBreakdown:
+                        transactionsData.categoryBreakdown || [],
+                    },
+                  });
+
+                  console.log("Bank data loaded:", {
+                    accountsData,
+                    transactionsData,
+                  });
+                } catch (dataError) {
+                  console.error("Error fetching bank data:", dataError);
+                  // Still allow connection even if data fetch fails
+                }
+
+                alert(
+                  `🎉 Bank account connected successfully!\n\n` +
+                    `Connected accounts: ${
+                      exchangeData.accounts?.length || 0
+                    }\n` +
+                    `Institution: ${
+                      metadata.institution?.name || "Unknown"
+                    }\n\n` +
+                    `Loading your financial data... You can now access your FinSight Dashboard.`
+                );
+              } else {
+                throw new Error(
+                  exchangeData.message || "Failed to connect account"
+                );
+              }
+            } catch (error) {
+              console.error("Error exchanging token:", error);
+              alert("Failed to complete bank connection. Please try again.");
+            }
+          },
+          onExit: (err, metadata) => {
+            if (err) {
+              console.error("Plaid Link error:", err);
+              alert(
+                "Bank connection was cancelled or failed. Please try again."
+              );
+            }
+            console.log("Plaid Link exit:", metadata);
+          },
+          onEvent: (eventName, metadata) => {
+            console.log("Plaid Link event:", eventName, metadata);
+          },
+        });
+
+        handler.open();
+      };
+
+      script.onerror = () => {
+        console.error("Failed to load Plaid Link script");
         alert(
-          "Bank account connected successfully! 🎉\n\nYou can now access your FinSight Dashboard."
+          "Failed to load Plaid Link. Please check your internet connection and try again."
         );
       };
 
-      // Run the simulation
-      await simulatePlaidFlow();
+      document.body.appendChild(script);
     } catch (error) {
       console.error("Failed to connect bank account:", error);
       alert(
@@ -104,6 +224,26 @@ export default function Home() {
           error.message
       );
     }
+  };
+
+  // Fallback demo simulation for when Plaid is not configured
+  const simulatePlaidFlow = async () => {
+    const confirmed = window.confirm(
+      "Demo Mode: Plaid Simulation\n\n" +
+        "This simulates a bank connection since Plaid credentials are not configured.\n\n" +
+        "Click OK to simulate connecting your bank account."
+    );
+
+    if (!confirmed) {
+      console.log("User cancelled bank connection");
+      return;
+    }
+
+    // Simulate successful bank connection
+    setBankConnected(true);
+    alert(
+      "🎉 Demo bank account connected successfully!\n\nYou can now access your FinSight Dashboard."
+    );
   };
 
   return (
@@ -159,7 +299,7 @@ export default function Home() {
                   finances and get personalized insights.
                   <br />
                   <span className="text-sm text-blue-300 mt-2 block">
-                    (Demo mode - uses simulated bank connection)
+                    Secure bank-grade encryption • Powered by Plaid
                   </span>
                 </p>
                 <button
@@ -219,8 +359,18 @@ export default function Home() {
               <div className="flex flex-wrap gap-6 justify-center w-full">
                 <div className="flex-1 flex justify-center min-w-[280px]">
                   <Card
-                    title="Balance"
-                    value="$5,000"
+                    title="Total Balance"
+                    value={
+                      bankData.summary?.totalBalance
+                        ? `$${bankData.summary.totalBalance.toLocaleString(
+                            "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}`
+                        : "$5,000"
+                    }
                     icon={
                       <span role="img" aria-label="money">
                         💰
@@ -230,11 +380,36 @@ export default function Home() {
                 </div>
                 <div className="flex-1 flex justify-center min-w-[280px]">
                   <Card
-                    title="Expenses"
-                    value="$1,200"
+                    title="This Month's Spending"
+                    value={
+                      bankData.summary?.totalSpending
+                        ? `$${bankData.summary.totalSpending.toLocaleString(
+                            "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}`
+                        : "$1,200"
+                    }
                     icon={
                       <span role="img" aria-label="expenses">
                         💸
+                      </span>
+                    }
+                  />
+                </div>
+                <div className="flex-1 flex justify-center min-w-[280px]">
+                  <Card
+                    title="Accounts"
+                    value={
+                      bankData.accounts?.length
+                        ? `${bankData.accounts.length} Connected`
+                        : "0 Connected"
+                    }
+                    icon={
+                      <span role="img" aria-label="accounts">
+                        🏦
                       </span>
                     }
                   />
