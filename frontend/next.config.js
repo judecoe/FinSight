@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Remove standalone output for Vercel deployment
+  // output: "standalone", // Only needed for Docker
   images: {
     domains: [],
   },
@@ -8,7 +10,8 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*", // Proxy to backend
+        destination:
+          process.env.BACKEND_URL || "http://localhost:8000/api/:path*", // Proxy to backend
       },
     ];
   },

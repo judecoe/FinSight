@@ -1,7 +1,6 @@
 # FinSight
 
-A modern personal finance dashboard application built with React and Tailwind CSS.
-
+A modern personal finance dashboard application built with Next.js and Tailwind CSS.
 
 ![alt text](https://github.com/judecoe/FinSight/blob/main/images/homepage.png "Logo Title Text 1")
 
@@ -21,66 +20,24 @@ FinSight helps users visualize their financial data through an elegant, intuitiv
 
 ## Tech Stack
 
-- **Frontend**: React with Vite, Tailwind CSS
+- **Frontend**: Next.js (React framework), Tailwind CSS
 - **Charts**: Recharts for data visualization
 - **Forms**: React Hook Form for form validation
 - **Authentication**: JWT-based auth with secure storage
 - **API Integration**: Plaid API for bank connections
 
-## Getting Started
+## Live Demo
 
-### Prerequisites
+🚀 **[View Live Application](https://finsight-b2j1o70uu-kxfhz8yjmj6mprqis-projects.vercel.app)**
 
-- Node.js 18+
-- npm or yarn
-
-### Installation
-
-1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/finsight.git
-cd finsight
-```
-
-2. Install dependencies
-
-```bash
-# Install frontend dependencies
-cd frontend
-npm install
-
-# Install backend dependencies
-cd ../backend
-pip install -r requirements.txt
-```
-
-3. Set up environment variables
-
-```bash
-# Create .env file in backend directory
-cp backend/.env.example backend/.env
-```
-
-4. Start the development servers
-
-```bash
-# Start backend (from root directory)
-cd backend
-python -m uvicorn app.main:app --reload
-
-# Start frontend (in a new terminal, from root directory)
-cd frontend
-npm run dev
-```
-
-5. Open your browser to `http://localhost:5173`
+The application is hosted on Vercel and available 24/7.
 
 ## Project Structure
 
 ```
 finance-dashboard/
-├── frontend/             # React frontend
+├── frontend/             # Next.js frontend
+│   ├── pages/            # Next.js pages (file-based routing)
 │   ├── src/
 │   │   ├── components/   # UI components
 │   │   ├── context/      # React context providers
@@ -100,7 +57,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
+- [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [React](https://reactjs.org/)
-- [Vite](https://vitejs.dev/)
 - [FastAPI](https://fastapi.tiangolo.com/)
+- [Vercel](https://vercel.com/) for hosting

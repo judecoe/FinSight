@@ -35,3 +35,13 @@ dist/
 
 # Environment variables
 /backend/.env
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.production.local
+
+# Vercel
+.vercel
+
+# Next.js
+/frontend/.next/
+/frontend/out/
