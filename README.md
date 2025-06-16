@@ -2,6 +2,11 @@
 
 A modern personal finance dashboard application built with React and Tailwind CSS.
 
+
+![alt text](https://github.com/judecoe/FinSight/blob/main/images/homepage.png "Logo Title Text 1")
+
+#
+
 ## Overview
 
 FinSight helps users visualize their financial data through an elegant, intuitive dashboard interface. Connect your bank accounts via Plaid to automatically track spending, monitor balances, and gain insights into your financial health.
