@@ -2,7 +2,10 @@
 
 A modern personal finance dashboard application built with Next.js, NextAuth.js, and Plaid integration.
 
-![Homepage](images/homepage.png)
+<video width="640" height="360" controls>
+  <source src="media/homepage.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ## Overview
 
