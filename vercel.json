@@ -1,14 +1,18 @@
 {
   "version": 2,
-  "name": "finance-dashboard",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "rootDirectory": "frontend",
-  "functions": {
-    "pages/api/**/*.js": {
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ]
 }
