@@ -2,6 +2,10 @@
 
 A modern personal finance dashboard application built with Next.js, NextAuth.js, and Plaid integration.
 
+## 🚀 Live Demo
+
+**[View Live Application](https://finsight-plum.vercel.app)**
+
 <video width="640" height="360" controls>
   <source src="media/homepage.mp4" type="video/mp4">
   Your browser does not support the video tag.
