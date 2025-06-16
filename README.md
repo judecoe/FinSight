@@ -2,14 +2,19 @@
 
 A modern personal finance dashboard application built with Next.js, NextAuth.js, and Plaid integration.
 
-## 🚀 Live Demo
+## 🚀 Check It Out
 
 **[View Live Application](https://finsight-plum.vercel.app)**
 
-<video width="640" height="360" controls>
-  <source src="media/homepage.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+## Screenshots
+
+### Homepage
+
+![Homepage](media/homepage.png)
+
+### Dashboard
+
+![Dashboard](media/dashboard.png)
 
 ## Overview
 
@@ -40,71 +45,6 @@ Finance Dashboard helps users visualize their financial data through an elegant,
 - **Next.js API Routes**: Serverless API endpoints
 - **Plaid API**: Bank account and transaction data
 - **NextAuth.js**: Session management
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Google OAuth credentials
-- Plaid developer account
-
-### 1. Clone and Install
-
-```bash
-git clone [your-repo-url]
-cd finance-dashboard/frontend
-npm install
-```
-
-### 2. Environment Setup
-
-```bash
-cp .env.example .env.local
-```
-
-Fill in your `.env.local` file:
-
-```env
-# NextAuth.js Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-here
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Plaid Configuration
-PLAID_CLIENT_ID=your-plaid-client-id
-PLAID_SECRET=your-plaid-secret
-PLAID_ENV=sandbox
-```
-
-### 3. Get Credentials
-
-#### Google OAuth Setup
-
-1. Go to [Google Cloud Console](https://console.developers.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized origins: `http://localhost:3000`
-6. Add callback URL: `http://localhost:3000/api/auth/callback/google`
-
-#### Plaid Setup
-
-1. Sign up at [Plaid Dashboard](https://dashboard.plaid.com/)
-2. Create a new app
-3. Go to Keys section to get Client ID and Secret
-4. Use "sandbox" environment for development
-
-### 4. Run Development Server
-
-```bash
-npm run dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000)
 
 ## Pages Structure
 
@@ -188,21 +128,6 @@ frontend/
 5. **Testing**: Add unit and integration tests
 6. **Monitoring**: Add logging and analytics
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-└── ...
-
-```
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -214,4 +139,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [React](https://reactjs.org/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Vercel](https://vercel.com/) for hosting
-```
