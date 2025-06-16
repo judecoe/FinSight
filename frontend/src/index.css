@@ -24,10 +24,10 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  width: 100%;
 }
 
 h1 {
@@ -80,7 +80,8 @@ button:focus-visible {
 
 html,
 body,
-#root {
+#root,
+#__next {
   width: 100%;
   margin: 0;
   padding: 0;
