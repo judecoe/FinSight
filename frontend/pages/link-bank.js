@@ -1,164 +1,143 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
 import { usePlaidLink } from "react-plaid-link";
-import { Card, Button } from "../src/components/ui";
 import withAuth from "../src/components/auth/withAuth";
 
 function LinkBank() {
   const { data: session } = useSession();
-  const [linkToken, setLinkToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [linkToken, setLinkToken] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
 
-  useEffect(() => {
-    // Create link token
-    createLinkToken();
-  }, []);
-
-  const createLinkToken = async () => {
+  // Fetch link token from API
+  const fetchLinkToken = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      setDebugInfo("Fetching link token...");
+
       const response = await fetch("/api/banking/link-token-public", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: session?.user?.email || "user_" + Date.now(),
+          user_id: session?.user?.email || "demo_user",
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create link token");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create link token");
       }
 
       const data = await response.json();
       setLinkToken(data.link_token);
+      setDebugInfo("Link token received!");
+      console.log("Link token received:", data.link_token ? "✓" : "✗");
     } catch (err) {
-      console.error("Error creating link token:", err);
-      setError("Failed to initialize bank connection. Please try again.");
+      console.error("Error fetching link token:", err);
+      setError(err.message || "Failed to initialize bank connection");
+      setDebugInfo("Error: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const onSuccess = async (public_token, metadata) => {
-    try {
-      setLoading(true);
+  // Fetch link token when component mounts
+  useEffect(() => {
+    fetchLinkToken();
+  }, [session]);
 
-      // Exchange public token for access token
-      const response = await fetch("/api/banking/set-access-token-public", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          public_token,
-          metadata,
-        }),
-      });
+  // Handle Plaid Link success
+  const onSuccess = useCallback(
+    async (public_token, metadata) => {
+      try {
+        setLoading(true);
 
-      if (!response.ok) {
-        throw new Error("Failed to exchange token");
-      }
-
-      const data = await response.json();
-
-      // Store access token securely (in production, this should be stored server-side)
-      localStorage.setItem("plaid_access_token", data.access_token);
-      localStorage.setItem("plaid_item_id", data.item_id);
-
-      // Fetch initial account data
-      await fetchAccountData(data.access_token);
-
-      setSuccess(true);
-
-      // Redirect to dashboard after successful connection
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 2000);
-    } catch (err) {
-      console.error("Error exchanging token:", err);
-      setError("Failed to connect bank account. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAccountData = async (accessToken) => {
-    try {
-      // Fetch accounts
-      const accountsResponse = await fetch("/api/banking/accounts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          access_token: accessToken,
-        }),
-      });
-
-      if (accountsResponse.ok) {
-        const accountsData = await accountsResponse.json();
-
-        // Fetch transactions
-        const transactionsResponse = await fetch("/api/banking/transactions", {
+        // Exchange public token for access token
+        const response = await fetch("/api/banking/set-access-token-public", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            access_token: accessToken,
+            public_token,
+            accounts: metadata.accounts,
+            institution: metadata.institution,
+            user_id: session?.user?.email || "demo_user",
           }),
         });
 
-        let transactionsData = { transactions: [] };
-        if (transactionsResponse.ok) {
-          transactionsData = await transactionsResponse.json();
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || "Failed to connect bank account"
+          );
         }
 
-        // Store bank data
-        const bankData = {
-          accounts: accountsData.accounts || [],
-          transactions: transactionsData.transactions || [],
-          summary: {
-            total_balance:
-              accountsData.accounts?.reduce(
-                (sum, acc) => sum + acc.balances.current,
-                0
-              ) || 0,
-            last_updated: new Date().toISOString(),
-          },
-        };
+        const data = await response.json();
+        console.log("Bank account connected successfully:", data);
 
-        localStorage.setItem("bankData", JSON.stringify(bankData));
+        setSuccess(true);
+
+        // Redirect to dashboard after successful connection
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
+      } catch (err) {
+        console.error("Error connecting bank account:", err);
+        setError(err.message || "Failed to connect bank account");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching account data:", err);
-    }
-  };
+    },
+    [session, router]
+  );
 
-  const onExit = (err, metadata) => {
+  // Handle Plaid Link events
+  const onEvent = useCallback((eventName, metadata) => {
+    console.log("Plaid Link event:", eventName, metadata);
+  }, []);
+
+  // Handle Plaid Link exit
+  const onExit = useCallback((err, metadata) => {
     if (err) {
-      console.error("Plaid Link exit error:", err);
-      setError("Bank connection was cancelled or failed.");
+      console.error("Plaid Link error:", err);
+      setError("Bank connection was cancelled or failed");
     }
-  };
+    console.log("Plaid Link exit:", metadata);
+  }, []);
 
+  // Initialize Plaid Link
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess,
+    onEvent,
     onExit,
   });
 
-  if (loading) {
+  // Debug logging
+  useEffect(() => {
+    console.log("Plaid Link state:", {
+      linkToken: linkToken ? "present" : "missing",
+      ready,
+      canOpen: ready && linkToken,
+    });
+  }, [linkToken, ready]);
+
+  if (loading && !linkToken) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Setting up bank connection...</p>
+          <p className="mt-4 text-gray-300">Setting up bank connection...</p>
         </div>
       </div>
     );
@@ -166,8 +145,8 @@ function LinkBank() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-gray-800 rounded-lg shadow-md p-8 max-w-md w-full text-center border border-gray-700">
           <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <svg
               className="h-8 w-8 text-green-600"
@@ -183,12 +162,12 @@ function LinkBank() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Success!</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Success!</h2>
+          <p className="text-gray-300 mb-6">
             Your bank account has been successfully connected.
           </p>
-          <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
-        </Card>
+          <p className="text-sm text-gray-400">Redirecting to dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -196,16 +175,16 @@ function LinkBank() {
   return (
     <>
       <Head>
-        <title>Link Bank Account - Finance Dashboard</title>
+        <title>Link Bank Account - FinSight</title>
         <meta name="description" content="Connect your bank account securely" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-900">
         {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
+        <nav className="bg-gray-800 shadow-sm border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <Link href="/dashboard" className="flex items-center">
+              <Link href="/home" className="flex items-center">
                 <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                   <svg
                     className="h-5 w-5 text-white"
@@ -221,16 +200,16 @@ function LinkBank() {
                     />
                   </svg>
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">
-                  Finance Dashboard
+                <span className="ml-2 text-xl font-bold text-white">
+                  FinSight
                 </span>
               </Link>
 
               <Link
-                href="/dashboard"
-                className="text-sm text-gray-500 hover:text-gray-700"
+                href="/home"
+                className="text-sm text-gray-400 hover:text-gray-200"
               >
-                ← Back to Dashboard
+                ← Back to Home
               </Link>
             </div>
           </div>
@@ -239,18 +218,18 @@ function LinkBank() {
         {/* Main Content */}
         <main className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-white mb-4">
               Connect Your Bank Account
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Securely link your bank account to get real-time insights into
-              your finances. Your data is encrypted and protected.
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Securely connect your bank account using Plaid to view your real
+              financial data and transactions.
             </p>
           </div>
 
           {error && (
             <div className="mb-8 max-w-md mx-auto">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-red-900 border border-red-700 rounded-lg p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg
@@ -268,7 +247,7 @@ function LinkBank() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-800">{error}</p>
+                    <p className="text-sm text-red-200">{error}</p>
                   </div>
                 </div>
               </div>
@@ -295,12 +274,12 @@ function LinkBank() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Bank-Level Security
+                  <h3 className="text-lg font-semibold text-white">
+                    Bank-Grade Security
                   </h3>
-                  <p className="text-gray-600">
-                    Your data is protected with 256-bit encryption and never
-                    stored on our servers.
+                  <p className="text-gray-300">
+                    Connect your accounts safely using Plaid's secure, encrypted
+                    connection trusted by thousands of apps.
                   </p>
                 </div>
               </div>
@@ -322,12 +301,12 @@ function LinkBank() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Real-Time Updates
+                  <h3 className="text-lg font-semibold text-white">
+                    Real-Time Data
                   </h3>
-                  <p className="text-gray-600">
-                    Get instant updates on your account balances and
-                    transactions.
+                  <p className="text-gray-300">
+                    Get up-to-date account balances and transaction history from
+                    your connected banks.
                   </p>
                 </div>
               </div>
@@ -349,19 +328,20 @@ function LinkBank() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-white">
                     Smart Analytics
                   </h3>
-                  <p className="text-gray-600">
-                    Automatically categorize spending and track financial goals.
+                  <p className="text-gray-300">
+                    Automatically categorize spending and get insights into your
+                    financial habits.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Right side - Connection */}
+            {/* Right side - Plaid Link */}
             <div>
-              <Card className="p-8">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700">
                 <div className="text-center">
                   <div className="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
                     <svg
@@ -379,43 +359,89 @@ function LinkBank() {
                     </svg>
                   </div>
 
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Ready to Connect?
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    Connect Your Bank
                   </h2>
 
-                  <p className="text-gray-600 mb-8">
-                    Click the button below to securely connect your bank account
-                    through Plaid. We support thousands of banks and credit
-                    unions.
+                  <p className="text-gray-300 mb-8">
+                    Use Plaid's secure connection to link your bank account and
+                    access your real financial data.
                   </p>
 
-                  <Button
-                    onClick={() => open()}
-                    disabled={!ready || loading}
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {!ready ? "Loading..." : "Connect Bank Account"}
-                  </Button>
+                  {loading ? (
+                    <div className="space-y-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-gray-600">
+                        {linkToken
+                          ? "Connecting to your bank..."
+                          : "Preparing secure connection..."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <button
+                        onClick={() => {
+                          console.log("Button clicked!", {
+                            ready,
+                            linkToken,
+                            open,
+                          });
+                          if (open) {
+                            console.log("Calling open()");
+                            open();
+                          } else {
+                            console.log("Open function not available");
+                          }
+                        }}
+                        disabled={!ready || !linkToken}
+                        className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {!linkToken ? "Preparing..." : "Connect Bank Account"}
+                      </button>
 
-                  <p className="text-xs text-gray-500 mt-4">
-                    Powered by Plaid • Used by millions of users • Bank-level
-                    security
-                  </p>
+                      <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                        <span>Secured by Plaid</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </Card>
+              </div>
 
-              {/* Trust indicators */}
+              {/* Security notice */}
               <div className="mt-8 text-center">
-                <p className="text-sm font-medium text-gray-900 mb-4">
-                  Trusted by leading financial institutions
-                </p>
-                <div className="flex justify-center items-center space-x-8 opacity-60">
-                  <div className="text-gray-400 font-semibold">CHASE</div>
-                  <div className="text-gray-400 font-semibold">WELLS FARGO</div>
-                  <div className="text-gray-400 font-semibold">
-                    BANK OF AMERICA
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                    <p className="text-sm font-medium text-green-800">
+                      Your data is encrypted and secure. We never store your
+                      bank credentials.
+                    </p>
                   </div>
-                  <div className="text-gray-400 font-semibold">CITI</div>
                 </div>
               </div>
             </div>

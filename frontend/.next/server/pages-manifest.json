@@ -1,5 +1,11 @@
 {
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js"
+  "/_document": "pages/_document.js",
+  "/home": "pages/home.js",
+  "/dashboard": "pages/dashboard.js",
+  "/api/banking/accounts": "pages/api/banking/accounts.js",
+  "/link-bank": "pages/link-bank.js",
+  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
+  "/api/banking/link-token-public": "pages/api/banking/link-token-public.js"
 }

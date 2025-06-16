@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import { Card, Chart } from "../src/components/ui";
+import { Chart } from "../src/components/ui";
 import withAuth from "../src/components/auth/withAuth";
+import { getChartData } from "../src/utils/chartData";
 
 function Dashboard() {
   const { data: session } = useSession();
@@ -15,12 +16,86 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load bank data from localStorage or API
-    const storedBankData = localStorage.getItem("bankData");
-    if (storedBankData) {
-      setBankData(JSON.parse(storedBankData));
-    }
-    setLoading(false);
+    const fetchBankData = async () => {
+      try {
+        setLoading(true);
+
+        // First, check if we have stored bank data in localStorage (demo mode fallback)
+        const storedBankData = localStorage.getItem("bankData");
+        const isDemoMode =
+          localStorage.getItem("demo_bank_connected") === "true";
+
+        if (isDemoMode && storedBankData) {
+          setBankData(JSON.parse(storedBankData));
+          setLoading(false);
+          return;
+        }
+
+        // Try to fetch real account data from Plaid
+        const accountsResponse = await fetch("/api/banking/accounts", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+
+          // Fetch transactions
+          const transactionsResponse = await fetch(
+            "/api/banking/transactions",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          let transactionsData = { transactions: [] };
+          if (transactionsResponse.ok) {
+            transactionsData = await transactionsResponse.json();
+          }
+
+          // Combine data
+          const combinedData = {
+            accounts: accountsData.accounts || [],
+            transactions: transactionsData.transactions || [],
+            summary: {
+              total_balance: accountsData.total_available || 0,
+              last_updated: new Date().toISOString(),
+            },
+          };
+
+          setBankData(combinedData);
+        } else {
+          // No bank data available, use empty state
+          setBankData({
+            accounts: [],
+            transactions: [],
+            summary: null,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching bank data:", error);
+        // Check for demo data fallback
+        const storedBankData = localStorage.getItem("bankData");
+        if (storedBankData) {
+          setBankData(JSON.parse(storedBankData));
+        } else {
+          setBankData({
+            accounts: [],
+            transactions: [],
+            summary: null,
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBankData();
   }, []);
 
   const handleSignOut = () => {
@@ -29,49 +104,170 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // Mock data for demonstration
-  const mockAccountsData = [
-    { id: "1", name: "Checking Account", balance: 5420.32, type: "checking" },
-    { id: "2", name: "Savings Account", balance: 12000.85, type: "savings" },
-    { id: "3", name: "Credit Card", balance: -1230.45, type: "credit" },
-  ];
+  // Use real bank data if available, otherwise use mock data for demonstration
+  const hasRealData = bankData.accounts.length > 0;
 
-  const mockTransactions = [
-    {
-      id: "1",
-      amount: -45.23,
-      merchant: "Starbucks",
-      date: "2025-06-15",
-      category: "Food & Drink",
-    },
-    {
-      id: "2",
-      amount: -120.0,
-      merchant: "Gas Station",
-      date: "2025-06-14",
-      category: "Transportation",
-    },
-    {
-      id: "3",
-      amount: 2500.0,
-      merchant: "Direct Deposit",
-      date: "2025-06-13",
-      category: "Income",
-    },
-    {
-      id: "4",
-      amount: -89.99,
-      merchant: "Amazon",
-      date: "2025-06-12",
-      category: "Shopping",
-    },
-  ];
+  const accountsData = hasRealData
+    ? bankData.accounts
+    : [
+        {
+          id: "1",
+          name: "Checking Account",
+          balance: 5420.32,
+          type: "checking",
+        },
+        {
+          id: "2",
+          name: "Savings Account",
+          balance: 12000.85,
+          type: "savings",
+        },
+        { id: "3", name: "Credit Card", balance: -1230.45, type: "credit" },
+      ];
+
+  const transactions = hasRealData
+    ? bankData.transactions
+    : [
+        {
+          id: "1",
+          amount: -45.23,
+          merchant: "Starbucks",
+          date: "2025-06-15",
+          category: "Food & Drink",
+        },
+        {
+          id: "2",
+          amount: -120.0,
+          merchant: "Gas Station",
+          date: "2025-06-14",
+          category: "Transportation",
+        },
+        {
+          id: "3",
+          amount: 2500.0,
+          merchant: "Direct Deposit",
+          date: "2025-06-13",
+          category: "Income",
+        },
+        {
+          id: "4",
+          amount: -89.99,
+          merchant: "Amazon",
+          date: "2025-06-12",
+          category: "Shopping",
+        },
+        {
+          id: "5",
+          amount: -15.75,
+          merchant: "McDonald's",
+          date: "2025-06-11",
+          category: "Food & Drink",
+        },
+        {
+          id: "6",
+          amount: -60.0,
+          merchant: "Uber",
+          date: "2025-06-10",
+          category: "Transportation",
+        },
+        {
+          id: "7",
+          amount: -200.0,
+          merchant: "Best Buy",
+          date: "2025-06-09",
+          category: "Shopping",
+        },
+        {
+          id: "8",
+          amount: 3000.0,
+          merchant: "Freelance Payment",
+          date: "2025-06-08",
+          category: "Income",
+        },
+        {
+          id: "9",
+          amount: -75.0,
+          merchant: "Gym Membership",
+          date: "2025-06-07",
+          category: "Health & Fitness",
+        },
+        {
+          id: "10",
+          amount: -35.0,
+          merchant: "Subway",
+          date: "2025-06-06",
+          category: "Food & Drink",
+        },
+        {
+          id: "11",
+          amount: -150.0,
+          merchant: "Target",
+          date: "2025-06-05",
+          category: "Shopping",
+        },
+        {
+          id: "12",
+          amount: -20.0,
+          merchant: "Spotify",
+          date: "2025-06-04",
+          category: "Entertainment",
+        },
+        {
+          id: "13",
+          amount: -300.0,
+          merchant: "Electric Company",
+          date: "2025-06-03",
+          category: "Bills",
+        },
+        {
+          id: "14",
+          amount: -50.0,
+          merchant: "Netflix",
+          date: "2025-06-02",
+          category: "Entertainment",
+        },
+        {
+          id: "15",
+          amount: -100.0,
+          merchant: "Walmart",
+          date: "2025-06-01",
+          category: "Shopping",
+        },
+        {
+          id: "16",
+          amount: 4000.0,
+          merchant: "Bonus Payment",
+          date: "2025-06-01",
+          category: "Income",
+        },
+        {
+          id: "17",
+          amount: -25.0,
+          merchant: "Starbucks",
+          date: "2025-06-01",
+          category: "Food & Drink",
+        },
+        {
+          id: "18",
+          amount: -80.0,
+          merchant: "Lyft",
+          date: "2025-06-01",
+          category: "Transportation",
+        },
+        {
+          id: "19",
+          amount: -45.0,
+          merchant: "CVS Pharmacy",
+          date: "2025-06-01",
+          category: "Health & Fitness",
+        },
+      ];
 
   const spendingData = {
     labels: [
@@ -98,21 +294,39 @@ function Dashboard() {
   const totalBalance =
     bankData.accounts.length > 0
       ? bankData.accounts.reduce((sum, account) => sum + account.balance, 0)
-      : mockAccountsData.reduce((sum, account) => sum + account.balance, 0);
+      : accountsData.reduce((sum, account) => sum + account.balance, 0);
+
+  // Get chart data and current month spending
+  const { trend } = getChartData(bankData, hasRealData);
+
+  const calculateCurrentMonthSpending = () => {
+    const transactionsList =
+      bankData.transactions.length > 0 ? bankData.transactions : transactions;
+    return transactionsList.reduce(
+      (sum, transaction) =>
+        sum + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0),
+      0
+    );
+  };
+
+  const currentMonthSpending = calculateCurrentMonthSpending();
 
   return (
     <>
       <Head>
-        <title>Dashboard - Finance Dashboard</title>
-        <meta name="description" content="Your personal finance dashboard" />
+        <title>Dashboard - FinSight</title>
+        <meta name="description" content="Your personal FinSight dashboard" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-900">
         {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="bg-gray-800 shadow-sm border-b border-gray-700">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
+              <Link
+                href="/"
+                className="flex items-center hover:opacity-80 transition-opacity"
+              >
                 <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                   <svg
                     className="h-5 w-5 text-white"
@@ -128,10 +342,10 @@ function Dashboard() {
                     />
                   </svg>
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900">
-                  Finance Dashboard
+                <span className="ml-2 text-xl font-bold text-white">
+                  FinSight
                 </span>
-              </div>
+              </Link>
 
               <div className="flex items-center space-x-4">
                 <Link
@@ -142,17 +356,12 @@ function Dashboard() {
                 </Link>
 
                 <div className="flex items-center space-x-3">
-                  <img
-                    className="h-8 w-8 rounded-full"
-                    src={session.user?.image || "/api/placeholder/32/32"}
-                    alt={session.user?.name || "User"}
-                  />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-300">
                     {session.user?.name}
                   </span>
                   <button
                     onClick={handleSignOut}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-sm text-gray-400 hover:text-gray-200"
                   >
                     Sign out
                   </button>
@@ -163,22 +372,61 @@ function Dashboard() {
         </nav>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             {/* Welcome Section */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-white">
                 Welcome back, {session.user?.name?.split(" ")[0]}!
               </h1>
-              <p className="mt-1 text-lg text-gray-600">
+              <p className="mt-1 text-lg text-gray-300">
                 Here's an overview of your financial data
               </p>
+
+              {/* Data Source Indicator */}
+              <div className="mt-4">
+                {!hasRealData ? (
+                  <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-900 text-yellow-200">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Demo Mode - Connect your bank to see real data
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-900 text-green-200">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                    Connected - Showing real bank data
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              <Card className="p-6">
-                <div className="flex items-center">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 py-10 border border-gray-700 min-h-32">
+                <div className="flex items-center h-full">
                   <div className="flex-shrink-0">
                     <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
                       <svg
@@ -198,10 +446,10 @@ function Dashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-gray-400 truncate">
                         Total Balance
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg font-medium text-white">
                         $
                         {totalBalance.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -210,14 +458,28 @@ function Dashboard() {
                     </dl>
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
-                <div className="flex items-center">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 py-10 border border-gray-700 min-h-32">
+                <div className="flex items-center h-full">
                   <div className="flex-shrink-0">
-                    <div className="h-8 w-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <div
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        trend.isPositive === null
+                          ? "bg-gray-100"
+                          : trend.isPositive
+                          ? "bg-red-100"
+                          : "bg-green-100"
+                      }`}
+                    >
                       <svg
-                        className="h-5 w-5 text-red-600"
+                        className={`h-5 w-5 ${
+                          trend.isPositive === null
+                            ? "text-gray-600"
+                            : trend.isPositive
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -226,26 +488,48 @@ function Dashboard() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          d={
+                            trend.isPositive === null
+                              ? "M20 12H4" // horizontal line for no change data
+                              : trend.isPositive
+                              ? "M7 10l5-5m0 0l5 5m-5-5v18" // up arrow for increase (bad)
+                              : "M17 14l-5 5m0 0l-5-5m5 5V4" // down arrow for decrease (good)
+                          }
                         />
                       </svg>
                     </div>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-gray-400 truncate">
                         This Month Spending
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        $1,845.67
+                      <dd className="text-lg font-medium text-white">
+                        $
+                        {currentMonthSpending.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        {trend.isPositive !== null && (
+                          <span
+                            className={`ml-1 text-sm ${
+                              trend.isPositive
+                                ? "text-red-400"
+                                : "text-green-400"
+                            }`}
+                          >
+                            ({trend.isPositive ? "+" : ""}
+                            {trend.percentage.toFixed(1)}%)
+                          </span>
+                        )}
                       </dd>
                     </dl>
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
-                <div className="flex items-center">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 py-10 border border-gray-700 min-h-32">
+                <div className="flex items-center h-full">
                   <div className="flex-shrink-0">
                     <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
                       <svg
@@ -265,19 +549,19 @@ function Dashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-gray-400 truncate">
                         Connected Accounts
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {bankData.accounts.length || mockAccountsData.length}
+                      <dd className="text-lg font-medium text-white">
+                        {accountsData.length}
                       </dd>
                     </dl>
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
-                <div className="flex items-center">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 py-10 border border-gray-700 min-h-32">
+                <div className="flex items-center h-full">
                   <div className="flex-shrink-0">
                     <div className="h-8 w-8 bg-yellow-100 rounded-lg flex items-center justify-center">
                       <svg
@@ -297,114 +581,130 @@ function Dashboard() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-gray-400 truncate">
                         Recent Transactions
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {bankData.transactions.length ||
-                          mockTransactions.length}
+                      <dd className="text-lg font-medium text-white">
+                        {bankData.transactions.length || transactions.length}
                       </dd>
                     </dl>
                   </div>
                 </div>
-              </Card>
+              </div>
             </div>
 
             {/* Charts and Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
               {/* Spending Chart */}
-              <Card className="p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Monthly Spending by Category
-                </h3>
-                <div className="h-64">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
+                <div className="h-full">
                   <Chart type="doughnut" data={spendingData} />
                 </div>
-              </Card>
+              </div>
 
               {/* Recent Transactions */}
-              <Card className="p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
+                <h3 className="text-lg font-medium text-white mb-4">
                   Recent Transactions
                 </h3>
-                <div className="space-y-3">
-                  {(bankData.transactions.length > 0
-                    ? bankData.transactions
-                    : mockTransactions
-                  )
-                    .slice(0, 5)
-                    .map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div
-                            className={`h-2 w-2 rounded-full ${
-                              transaction.amount > 0
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          ></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {transaction.merchant}
-                            </p>
-                            <p className="text-xs text-gray-500">
+                <div className="overflow-y-auto max-h-96">
+                  <table className="min-w-full table-auto">
+                    <thead className="sticky top-0 bg-gray-800">
+                      <tr className="border-b border-gray-600">
+                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Merchant
+                        </th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-600">
+                      {(bankData.transactions.length > 0
+                        ? bankData.transactions
+                        : transactions
+                      ).map((transaction) => (
+                        <tr
+                          key={transaction.id}
+                          className="hover:bg-gray-700 transition-colors"
+                        >
+                          <td className="py-3 px-3">
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className={`h-2 w-2 rounded-full flex-shrink-0 ${
+                                  transaction.amount > 0
+                                    ? "bg-green-500"
+                                    : "bg-red-500"
+                                }`}
+                              ></div>
+                              <span className="text-sm font-medium text-white truncate">
+                                {transaction.merchant}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="text-xs text-gray-400">
                               {transaction.category}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p
-                            className={`text-sm font-medium ${
-                              transaction.amount > 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {transaction.amount > 0 ? "+" : ""}$
-                            {Math.abs(transaction.amount).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {transaction.date}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <span
+                              className={`text-sm font-medium ${
+                                transaction.amount > 0
+                                  ? "text-green-400"
+                                  : "text-red-400"
+                              }`}
+                            >
+                              {transaction.amount > 0 ? "+" : ""}$
+                              {Math.abs(transaction.amount).toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <span className="text-xs text-gray-400">
+                              {transaction.date}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </Card>
+              </div>
             </div>
 
             {/* Account Overview */}
-            <Card className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700 min-h-60">
+              <h3 className="text-lg font-medium text-white mb-4">
                 Account Overview
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(bankData.accounts.length > 0
                   ? bankData.accounts
-                  : mockAccountsData
+                  : accountsData
                 ).map((account) => (
                   <div
                     key={account.id}
-                    className="border border-gray-200 rounded-lg p-4"
+                    className="border border-gray-600 rounded-lg p-6 bg-gray-700 min-h-24"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">
+                        <h4 className="text-sm font-medium text-white">
                           {account.name}
                         </h4>
-                        <p className="text-xs text-gray-500 capitalize">
+                        <p className="text-xs text-gray-400 capitalize">
                           {account.type}
                         </p>
                       </div>
                       <div className="text-right">
                         <p
                           className={`text-lg font-medium ${
-                            account.balance >= 0
-                              ? "text-gray-900"
-                              : "text-red-600"
+                            account.balance >= 0 ? "text-white" : "text-red-400"
                           }`}
                         >
                           $
@@ -413,14 +713,14 @@ function Dashboard() {
                           })}
                         </p>
                         {account.balance < 0 && (
-                          <p className="text-xs text-red-500">Credit Balance</p>
+                          <p className="text-xs text-red-400">Credit Balance</p>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
           </div>
         </main>
       </div>

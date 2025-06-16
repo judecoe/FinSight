@@ -46,17 +46,17 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Login - Finance Dashboard</title>
-        <meta name="description" content="Sign in to your finance dashboard" />
+        <title>Login - FinSight</title>
+        <meta name="description" content="Sign in to your FinSight dashboard" />
       </Head>
 
       <AuthStatus />
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
         <div className="max-w-md w-full space-y-8">
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-900/50 border border-red-600 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg
@@ -74,7 +74,7 @@ export default function Login() {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
+                  <p className="text-sm text-red-300">{error}</p>
                 </div>
               </div>
             </div>
@@ -97,22 +97,22 @@ export default function Login() {
                 />
               </svg>
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-3xl font-extrabold text-white">
               Welcome back
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Sign in to access your finance dashboard
+            <p className="mt-2 text-sm text-gray-300">
+              Sign in to access your FinSight dashboard
             </p>
           </div>
 
           {/* Login Form */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-8">
             <div className="space-y-6">
               <div>
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full flex justify-center items-center space-x-3 bg-white border border-gray-300 rounded-md py-3 px-4 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="w-full flex justify-center items-center space-x-3 bg-gray-700 border border-gray-600 rounded-md py-3 px-4 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {loading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
@@ -145,18 +145,18 @@ export default function Login() {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-400">
                   By signing in, you agree to our{" "}
                   <Link
                     href="/terms"
-                    className="text-blue-600 hover:text-blue-500"
+                    className="text-blue-400 hover:text-blue-300"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
                     href="/privacy"
-                    className="text-blue-600 hover:text-blue-500"
+                    className="text-blue-400 hover:text-blue-300"
                   >
                     Privacy Policy
                   </Link>
@@ -168,8 +168,8 @@ export default function Login() {
           {/* Back to home */}
           <div className="text-center">
             <Link
-              href="/"
-              className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+              href="/home"
+              className="text-sm text-blue-400 hover:text-blue-300 font-medium"
             >
               ← Back to home
             </Link>

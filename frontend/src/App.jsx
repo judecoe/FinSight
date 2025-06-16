@@ -2,10 +2,14 @@ import { useEffect } from "react";
 import { Card, Chart } from "./components/ui";
 import Navbar from "./components/Navbar";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { getChartData } from "./utils/chartData";
 
 // Wrap the main content with authentication
 const AppContent = () => {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, bankData, isBankConnected } = useAuth();
+
+  // Get chart data and current month spending
+  const { currentMonthSpending } = getChartData(bankData, isBankConnected);
 
   // Enhanced scroll animation effect with better options
   useEffect(() => {
@@ -155,7 +159,10 @@ const AppContent = () => {
             <div className="flex-1 flex justify-center min-w-[280px]">
               <Card
                 title="Expenses"
-                value="$1,200"
+                value={`$${currentMonthSpending.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
                 icon={
                   <span role="img" aria-label="expenses">
                     💸

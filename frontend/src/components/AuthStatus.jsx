@@ -5,7 +5,7 @@ export default function AuthStatus() {
 
   if (status === "loading") {
     return (
-      <div className="fixed top-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded text-sm">
+      <div className="fixed top-4 right-4 bg-yellow-900/50 border border-yellow-600 text-yellow-300 px-3 py-2 rounded text-sm">
         Loading...
       </div>
     );
@@ -13,14 +13,14 @@ export default function AuthStatus() {
 
   if (session) {
     return (
-      <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded text-sm">
+      <div className="fixed top-4 right-4 bg-green-900/50 border border-green-600 text-green-300 px-3 py-2 rounded text-sm">
         ✅ Signed in as {session.user?.name || session.user?.email}
       </div>
     );
   }
 
   return (
-    <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm">
+    <div className="fixed top-4 right-4 bg-red-900/50 border border-red-600 text-red-300 px-3 py-2 rounded text-sm">
       ❌ Not signed in
     </div>
   );
