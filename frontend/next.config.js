@@ -1,17 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Remove standalone output for Vercel deployment
-  // output: "standalone", // Only needed for Docker
   images: {
-    domains: [],
+    domains: ["lh3.googleusercontent.com"], // Add Google profile images
+  },
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      // Suppress webpack cache warnings in development
+      config.infrastructureLogging = {
+        level: "error",
+      };
+    }
+    return config;
   },
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
+        source: "/api/banking/:path*", // Only proxy banking API calls
         destination:
-          process.env.BACKEND_URL || "http://localhost:8000/api/:path*", // Proxy to backend
+          process.env.BACKEND_URL || "http://localhost:8000/api/banking/:path*",
       },
     ];
   },

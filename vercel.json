@@ -1,9 +1,26 @@
 {
   "version": 2,
-  "name": "finsight",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
+  "name": "finance-dashboard",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "cd frontend && npm install",
   "framework": "nextjs",
-  "cwd": "frontend"
+  "functions": {
+    "frontend/pages/api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "next-auth.session-token"
+        }
+      ],
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ]
 }

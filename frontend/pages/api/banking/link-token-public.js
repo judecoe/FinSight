@@ -5,7 +5,7 @@ import {
 } from "../../../lib/plaid";
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST" && req.method !== "GET") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
@@ -32,8 +32,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Create a safe, non-sensitive user identifier
-    const rawUserId = req.headers["user-id"] || "demo_user_" + Date.now();
+    // Get user ID from request body or headers
+    const rawUserId =
+      req.body?.user_id || req.headers["user-id"] || "demo_user_" + Date.now();
 
     // Ensure the user ID doesn't contain sensitive information
     const sanitizeUserId = (userId) => {

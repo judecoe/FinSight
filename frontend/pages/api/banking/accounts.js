@@ -1,11 +1,12 @@
 import { plaidClient } from "../../../lib/plaid";
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST" && req.method !== "GET") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { access_token } = req.query;
+  const access_token =
+    req.method === "POST" ? req.body?.access_token : req.query?.access_token;
 
   if (!access_token) {
     return res.status(400).json({ message: "Access token is required" });
