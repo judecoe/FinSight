@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import { Chart } from "../src/components/ui";
+import { Chart, PureChart } from "../src/components/ui";
 import withAuth from "../src/components/auth/withAuth";
 import { getChartData } from "../src/utils/chartData";
 
@@ -722,9 +722,12 @@ function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
               {/* Monthly Spending Trend */}
               <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
-                <div className="h-full flex justify-center">
-                  <Chart type="line" data={monthlySpendingData} />
-                </div>
+                <PureChart
+                  type="line"
+                  data={chartData}
+                  title="Monthly Spending (Demo)"
+                  height={350}
+                />
               </div>
 
               {/* Recent Transactions */}
