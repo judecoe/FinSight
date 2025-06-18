@@ -353,28 +353,37 @@ export const getSpendingTrend = (chartData) => {
 };
 
 // Determine if we should use real data or demo data
-export const getChartData = (bankData, isBankConnected) => {
+export const getChartData = (
+  bankData,
+  isBankConnected,
+  currentTransactions = null
+) => {
   const hasValidRealData =
     isBankConnected && bankData?.summary?.monthlySpending?.length > 0;
 
   let chartData;
 
-  if (hasValidRealData) {
-    // Use real bank data if available
+  if (hasValidRealData && !currentTransactions) {
+    // Use real bank data if available and no custom transactions provided
     chartData = bankData.summary.monthlySpending;
   } else {
-    // Calculate monthly spending from mock transactions
-    const mockTransactions = getMockTransactions();
-    chartData = calculateMonthlySpending(mockTransactions);
+    // Calculate monthly spending from current transactions (including user edits)
+    const transactionsToUse =
+      currentTransactions ||
+      (bankData?.transactions?.length > 0
+        ? bankData.transactions
+        : getMockTransactions());
+    chartData = calculateMonthlySpending(transactionsToUse);
   }
 
   // Calculate current month spending from transactions (for consistency)
-  const hasRealTransactions = bankData?.transactions?.length > 0;
-  const transactionsList = hasRealTransactions
-    ? bankData.transactions
-    : getMockTransactions();
+  const transactionsToUse =
+    currentTransactions ||
+    (bankData?.transactions?.length > 0
+      ? bankData.transactions
+      : getMockTransactions());
 
-  const currentMonthSpendingFromTransactions = transactionsList.reduce(
+  const currentMonthSpendingFromTransactions = transactionsToUse.reduce(
     (sum, transaction) =>
       sum + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0),
     0

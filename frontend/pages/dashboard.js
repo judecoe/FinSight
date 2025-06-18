@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { Chart, PureChart } from "../src/components/ui";
 import withAuth from "../src/components/auth/withAuth";
 import { getChartData } from "../src/utils/chartData";
+import TransactionRow from "../src/components/TransactionRow";
+import {
+  applyUserEditsToTransactions,
+  updateTransaction,
+} from "../src/utils/transactionEdits";
 
 function Dashboard() {
   const { data: session } = useSession();
@@ -14,6 +19,33 @@ function Dashboard() {
     summary: null,
   });
   const [loading, setLoading] = useState(true);
+  const [transactionUpdateTrigger, setTransactionUpdateTrigger] = useState(0);
+
+  // Handle transaction updates
+  const handleUpdateTransaction = async (updatedTransaction) => {
+    try {
+      await updateTransaction(updatedTransaction.id, {
+        name: updatedTransaction.merchant || updatedTransaction.name,
+        amount: updatedTransaction.amount,
+      });
+
+      // Update local state immediately
+      setBankData((prevData) => ({
+        ...prevData,
+        transactions: prevData.transactions.map((transaction) =>
+          transaction.id === updatedTransaction.id
+            ? { ...transaction, ...updatedTransaction, isUserEdited: true }
+            : transaction
+        ),
+      }));
+
+      // Trigger chart recalculation
+      setTransactionUpdateTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error("Failed to update transaction:", error);
+      throw error; // Re-throw so the component can handle the error
+    }
+  };
 
   useEffect(() => {
     const fetchBankData = async () => {
@@ -58,10 +90,13 @@ function Dashboard() {
             transactionsData = await transactionsResponse.json();
           }
 
-          // Combine data
+          // Combine data and apply user edits
+          const transactionsWithEdits = applyUserEditsToTransactions(
+            transactionsData.transactions || []
+          );
           const combinedData = {
             accounts: accountsData.accounts || [],
-            transactions: transactionsData.transactions || [],
+            transactions: transactionsWithEdits,
             summary: {
               total_balance: accountsData.total_available || 0,
               last_updated: new Date().toISOString(),
@@ -98,18 +133,6 @@ function Dashboard() {
     fetchBankData();
   }, []);
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   // Use real bank data if available, otherwise use mock data for demonstration
   const hasRealData = bankData.accounts.length > 0;
 
@@ -131,231 +154,250 @@ function Dashboard() {
         { id: "3", name: "Credit Card", balance: -1230.45, type: "credit" },
       ];
 
+  const mockTransactions = [
+    // June 2025
+    {
+      id: "1",
+      amount: -45.23,
+      merchant: "Starbucks",
+      date: "2025-06-15",
+      category: "Food & Drink",
+    },
+    {
+      id: "2",
+      amount: -120.0,
+      merchant: "Gas Station",
+      date: "2025-06-12",
+      category: "Transportation",
+    },
+    {
+      id: "3",
+      amount: 2500.0,
+      merchant: "Direct Deposit",
+      date: "2025-06-01",
+      category: "Income",
+    },
+
+    // May 2025
+    {
+      id: "4",
+      amount: -89.99,
+      merchant: "Amazon",
+      date: "2025-05-28",
+      category: "Shopping",
+    },
+    {
+      id: "5",
+      amount: -15.75,
+      merchant: "McDonald's",
+      date: "2025-05-25",
+      category: "Food & Drink",
+    },
+    {
+      id: "6",
+      amount: -60.0,
+      merchant: "Uber",
+      date: "2025-05-20",
+      category: "Transportation",
+    },
+    {
+      id: "7",
+      amount: 3000.0,
+      merchant: "Freelance Payment",
+      date: "2025-05-15",
+      category: "Income",
+    },
+    {
+      id: "8",
+      amount: -200.0,
+      merchant: "Best Buy",
+      date: "2025-05-10",
+      category: "Shopping",
+    },
+
+    // April 2025
+    {
+      id: "9",
+      amount: -75.0,
+      merchant: "Gym Membership",
+      date: "2025-04-28",
+      category: "Health & Fitness",
+    },
+    {
+      id: "10",
+      amount: -35.0,
+      merchant: "Subway",
+      date: "2025-04-22",
+      category: "Food & Drink",
+    },
+    {
+      id: "11",
+      amount: -150.0,
+      merchant: "Target",
+      date: "2025-04-18",
+      category: "Shopping",
+    },
+    {
+      id: "12",
+      amount: -300.0,
+      merchant: "Electric Company",
+      date: "2025-04-15",
+      category: "Bills",
+    },
+    {
+      id: "13",
+      amount: 2800.0,
+      merchant: "Salary",
+      date: "2025-04-01",
+      category: "Income",
+    },
+
+    // March 2025
+    {
+      id: "14",
+      amount: -20.0,
+      merchant: "Spotify",
+      date: "2025-03-25",
+      category: "Entertainment",
+    },
+    {
+      id: "15",
+      amount: -50.0,
+      merchant: "Netflix",
+      date: "2025-03-20",
+      category: "Entertainment",
+    },
+    {
+      id: "16",
+      amount: -100.0,
+      merchant: "Walmart",
+      date: "2025-03-15",
+      category: "Shopping",
+    },
+    {
+      id: "17",
+      amount: -80.0,
+      merchant: "Lyft",
+      date: "2025-03-10",
+      category: "Transportation",
+    },
+    {
+      id: "18",
+      amount: 2900.0,
+      merchant: "Paycheck",
+      date: "2025-03-01",
+      category: "Income",
+    },
+
+    // February 2025
+    {
+      id: "19",
+      amount: -45.0,
+      merchant: "CVS Pharmacy",
+      date: "2025-02-28",
+      category: "Health & Fitness",
+    },
+    {
+      id: "20",
+      amount: -25.0,
+      merchant: "Starbucks",
+      date: "2025-02-22",
+      category: "Food & Drink",
+    },
+    {
+      id: "21",
+      amount: -180.0,
+      merchant: "Costco",
+      date: "2025-02-18",
+      category: "Shopping",
+    },
+    {
+      id: "22",
+      amount: -65.0,
+      merchant: "Restaurant",
+      date: "2025-02-14",
+      category: "Food & Drink",
+    },
+    {
+      id: "23",
+      amount: 2750.0,
+      merchant: "Direct Deposit",
+      date: "2025-02-01",
+      category: "Income",
+    },
+
+    // January 2025
+    {
+      id: "24",
+      amount: 4000.0,
+      merchant: "Bonus Payment",
+      date: "2025-01-31",
+      category: "Income",
+    },
+    {
+      id: "25",
+      amount: -280.0,
+      merchant: "Rent Payment",
+      date: "2025-01-30",
+      category: "Bills",
+    },
+    {
+      id: "26",
+      amount: -110.0,
+      merchant: "Phone Bill",
+      date: "2025-01-25",
+      category: "Bills",
+    },
+    {
+      id: "27",
+      amount: -55.0,
+      merchant: "Grocery Store",
+      date: "2025-01-20",
+      category: "Food & Drink",
+    },
+    {
+      id: "28",
+      amount: -90.0,
+      merchant: "Gas Station",
+      date: "2025-01-15",
+      category: "Transportation",
+    },
+    {
+      id: "29",
+      amount: -35.0,
+      merchant: "Coffee Shop",
+      date: "2025-01-10",
+      category: "Food & Drink",
+    },
+    {
+      id: "30",
+      amount: 2600.0,
+      merchant: "Salary",
+      date: "2025-01-01",
+      category: "Income",
+    },
+  ];
+
   const transactions = hasRealData
     ? bankData.transactions
-    : [
-        // June 2025
-        {
-          id: "1",
-          amount: -45.23,
-          merchant: "Starbucks",
-          date: "2025-06-15",
-          category: "Food & Drink",
-        },
-        {
-          id: "2",
-          amount: -120.0,
-          merchant: "Gas Station",
-          date: "2025-06-12",
-          category: "Transportation",
-        },
-        {
-          id: "3",
-          amount: 2500.0,
-          merchant: "Direct Deposit",
-          date: "2025-06-01",
-          category: "Income",
-        },
+    : applyUserEditsToTransactions(mockTransactions);
 
-        // May 2025
-        {
-          id: "4",
-          amount: -89.99,
-          merchant: "Amazon",
-          date: "2025-05-28",
-          category: "Shopping",
-        },
-        {
-          id: "5",
-          amount: -15.75,
-          merchant: "McDonald's",
-          date: "2025-05-25",
-          category: "Food & Drink",
-        },
-        {
-          id: "6",
-          amount: -60.0,
-          merchant: "Uber",
-          date: "2025-05-20",
-          category: "Transportation",
-        },
-        {
-          id: "7",
-          amount: 3000.0,
-          merchant: "Freelance Payment",
-          date: "2025-05-15",
-          category: "Income",
-        },
-        {
-          id: "8",
-          amount: -200.0,
-          merchant: "Best Buy",
-          date: "2025-05-10",
-          category: "Shopping",
-        },
+  // Get chart data and current month spending using transactions with user edits applied
+  const { chartData, trend, currentMonthSpending } = useMemo(() => {
+    return getChartData(bankData, hasRealData, transactions);
+  }, [bankData, hasRealData, transactions, transactionUpdateTrigger]);
 
-        // April 2025
-        {
-          id: "9",
-          amount: -75.0,
-          merchant: "Gym Membership",
-          date: "2025-04-28",
-          category: "Health & Fitness",
-        },
-        {
-          id: "10",
-          amount: -35.0,
-          merchant: "Subway",
-          date: "2025-04-22",
-          category: "Food & Drink",
-        },
-        {
-          id: "11",
-          amount: -150.0,
-          merchant: "Target",
-          date: "2025-04-18",
-          category: "Shopping",
-        },
-        {
-          id: "12",
-          amount: -300.0,
-          merchant: "Electric Company",
-          date: "2025-04-15",
-          category: "Bills",
-        },
-        {
-          id: "13",
-          amount: 2800.0,
-          merchant: "Salary",
-          date: "2025-04-01",
-          category: "Income",
-        },
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/" });
+  };
 
-        // March 2025
-        {
-          id: "14",
-          amount: -20.0,
-          merchant: "Spotify",
-          date: "2025-03-25",
-          category: "Entertainment",
-        },
-        {
-          id: "15",
-          amount: -50.0,
-          merchant: "Netflix",
-          date: "2025-03-20",
-          category: "Entertainment",
-        },
-        {
-          id: "16",
-          amount: -100.0,
-          merchant: "Walmart",
-          date: "2025-03-15",
-          category: "Shopping",
-        },
-        {
-          id: "17",
-          amount: -80.0,
-          merchant: "Lyft",
-          date: "2025-03-10",
-          category: "Transportation",
-        },
-        {
-          id: "18",
-          amount: 2900.0,
-          merchant: "Paycheck",
-          date: "2025-03-01",
-          category: "Income",
-        },
-
-        // February 2025
-        {
-          id: "19",
-          amount: -45.0,
-          merchant: "CVS Pharmacy",
-          date: "2025-02-28",
-          category: "Health & Fitness",
-        },
-        {
-          id: "20",
-          amount: -25.0,
-          merchant: "Starbucks",
-          date: "2025-02-22",
-          category: "Food & Drink",
-        },
-        {
-          id: "21",
-          amount: -180.0,
-          merchant: "Costco",
-          date: "2025-02-18",
-          category: "Shopping",
-        },
-        {
-          id: "22",
-          amount: -65.0,
-          merchant: "Restaurant",
-          date: "2025-02-14",
-          category: "Food & Drink",
-        },
-        {
-          id: "23",
-          amount: 2750.0,
-          merchant: "Direct Deposit",
-          date: "2025-02-01",
-          category: "Income",
-        },
-
-        // January 2025
-        {
-          id: "24",
-          amount: 4000.0,
-          merchant: "Bonus Payment",
-          date: "2025-01-31",
-          category: "Income",
-        },
-        {
-          id: "25",
-          amount: -280.0,
-          merchant: "Rent Payment",
-          date: "2025-01-30",
-          category: "Bills",
-        },
-        {
-          id: "26",
-          amount: -110.0,
-          merchant: "Phone Bill",
-          date: "2025-01-25",
-          category: "Bills",
-        },
-        {
-          id: "27",
-          amount: -55.0,
-          merchant: "Grocery Store",
-          date: "2025-01-20",
-          category: "Food & Drink",
-        },
-        {
-          id: "28",
-          amount: -90.0,
-          merchant: "Gas Station",
-          date: "2025-01-15",
-          category: "Transportation",
-        },
-        {
-          id: "29",
-          amount: -35.0,
-          merchant: "Coffee Shop",
-          date: "2025-01-10",
-          category: "Food & Drink",
-        },
-        {
-          id: "30",
-          amount: 2600.0,
-          merchant: "Salary",
-          date: "2025-01-01",
-          category: "Income",
-        },
-      ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const spendingData = {
     labels: [
@@ -383,9 +425,6 @@ function Dashboard() {
     bankData.accounts.length > 0
       ? bankData.accounts.reduce((sum, account) => sum + account.balance, 0)
       : accountsData.reduce((sum, account) => sum + account.balance, 0);
-
-  // Get chart data and current month spending
-  const { chartData, trend } = getChartData(bankData, hasRealData);
 
   // Prepare monthly spending chart data
   const monthlySpendingData = {
@@ -433,8 +472,6 @@ function Dashboard() {
       return sum;
     }, 0);
   };
-
-  const currentMonthSpending = calculateCurrentMonthSpending();
 
   return (
     <>
@@ -723,18 +760,43 @@ function Dashboard() {
               {/* Monthly Spending Trend */}
               <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
                 <PureChart
+                  key={`chart-${transactionUpdateTrigger}`}
                   type="line"
                   data={chartData}
-                  title="Monthly Spending (Demo)"
+                  title={`Monthly Spending ${
+                    hasRealData ? "(Real Data)" : "(Demo)"
+                  }${
+                    transactions.some((t) => t.isUserEdited)
+                      ? " - Includes Your Edits"
+                      : ""
+                  }`}
                   height={350}
                 />
               </div>
 
               {/* Recent Transactions */}
               <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
-                <h3 className="text-lg font-medium text-white mb-4">
-                  Recent Transactions
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-white">
+                    Recent Transactions
+                  </h3>
+                  <div className="flex items-center space-x-1 text-xs text-gray-400">
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
+                    </svg>
+                    <span>Hover to edit • Updates chart</span>
+                  </div>
+                </div>
                 <div className="overflow-y-auto max-h-96">
                   <table className="min-w-full table-auto">
                     <thead className="sticky top-0 bg-gray-800">
@@ -758,47 +820,11 @@ function Dashboard() {
                         ? bankData.transactions
                         : transactions
                       ).map((transaction) => (
-                        <tr
+                        <TransactionRow
                           key={transaction.id}
-                          className="hover:bg-gray-700 transition-colors"
-                        >
-                          <td className="py-3 px-3">
-                            <div className="flex items-center space-x-2">
-                              <div
-                                className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                                  transaction.amount > 0
-                                    ? "bg-green-500"
-                                    : "bg-red-500"
-                                }`}
-                              ></div>
-                              <span className="text-sm font-medium text-white truncate">
-                                {transaction.merchant}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 px-3">
-                            <span className="text-xs text-gray-400">
-                              {transaction.category}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <span
-                              className={`text-sm font-medium ${
-                                transaction.amount > 0
-                                  ? "text-green-400"
-                                  : "text-red-400"
-                              }`}
-                            >
-                              {transaction.amount > 0 ? "+" : ""}$
-                              {Math.abs(transaction.amount).toFixed(2)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <span className="text-xs text-gray-400">
-                              {transaction.date}
-                            </span>
-                          </td>
-                        </tr>
+                          transaction={transaction}
+                          onUpdateTransaction={handleUpdateTransaction}
+                        />
                       ))}
                     </tbody>
                   </table>
