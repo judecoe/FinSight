@@ -134,6 +134,7 @@ function Dashboard() {
   const transactions = hasRealData
     ? bankData.transactions
     : [
+        // June 2025
         {
           id: "1",
           amount: -45.23,
@@ -145,127 +146,214 @@ function Dashboard() {
           id: "2",
           amount: -120.0,
           merchant: "Gas Station",
-          date: "2025-06-14",
+          date: "2025-06-12",
           category: "Transportation",
         },
         {
           id: "3",
           amount: 2500.0,
           merchant: "Direct Deposit",
-          date: "2025-06-13",
+          date: "2025-06-01",
           category: "Income",
         },
+
+        // May 2025
         {
           id: "4",
           amount: -89.99,
           merchant: "Amazon",
-          date: "2025-06-12",
+          date: "2025-05-28",
           category: "Shopping",
         },
         {
           id: "5",
           amount: -15.75,
           merchant: "McDonald's",
-          date: "2025-06-11",
+          date: "2025-05-25",
           category: "Food & Drink",
         },
         {
           id: "6",
           amount: -60.0,
           merchant: "Uber",
-          date: "2025-06-10",
+          date: "2025-05-20",
           category: "Transportation",
         },
         {
           id: "7",
-          amount: -200.0,
-          merchant: "Best Buy",
-          date: "2025-06-09",
-          category: "Shopping",
+          amount: 3000.0,
+          merchant: "Freelance Payment",
+          date: "2025-05-15",
+          category: "Income",
         },
         {
           id: "8",
-          amount: 3000.0,
-          merchant: "Freelance Payment",
-          date: "2025-06-08",
-          category: "Income",
+          amount: -200.0,
+          merchant: "Best Buy",
+          date: "2025-05-10",
+          category: "Shopping",
         },
+
+        // April 2025
         {
           id: "9",
           amount: -75.0,
           merchant: "Gym Membership",
-          date: "2025-06-07",
+          date: "2025-04-28",
           category: "Health & Fitness",
         },
         {
           id: "10",
           amount: -35.0,
           merchant: "Subway",
-          date: "2025-06-06",
+          date: "2025-04-22",
           category: "Food & Drink",
         },
         {
           id: "11",
           amount: -150.0,
           merchant: "Target",
-          date: "2025-06-05",
+          date: "2025-04-18",
           category: "Shopping",
         },
         {
           id: "12",
-          amount: -20.0,
-          merchant: "Spotify",
-          date: "2025-06-04",
-          category: "Entertainment",
-        },
-        {
-          id: "13",
           amount: -300.0,
           merchant: "Electric Company",
-          date: "2025-06-03",
+          date: "2025-04-15",
           category: "Bills",
         },
         {
+          id: "13",
+          amount: 2800.0,
+          merchant: "Salary",
+          date: "2025-04-01",
+          category: "Income",
+        },
+
+        // March 2025
+        {
           id: "14",
-          amount: -50.0,
-          merchant: "Netflix",
-          date: "2025-06-02",
+          amount: -20.0,
+          merchant: "Spotify",
+          date: "2025-03-25",
           category: "Entertainment",
         },
         {
           id: "15",
-          amount: -100.0,
-          merchant: "Walmart",
-          date: "2025-06-01",
-          category: "Shopping",
+          amount: -50.0,
+          merchant: "Netflix",
+          date: "2025-03-20",
+          category: "Entertainment",
         },
         {
           id: "16",
-          amount: 4000.0,
-          merchant: "Bonus Payment",
-          date: "2025-06-01",
-          category: "Income",
+          amount: -100.0,
+          merchant: "Walmart",
+          date: "2025-03-15",
+          category: "Shopping",
         },
         {
           id: "17",
-          amount: -25.0,
-          merchant: "Starbucks",
-          date: "2025-06-01",
-          category: "Food & Drink",
+          amount: -80.0,
+          merchant: "Lyft",
+          date: "2025-03-10",
+          category: "Transportation",
         },
         {
           id: "18",
-          amount: -80.0,
-          merchant: "Lyft",
-          date: "2025-06-01",
-          category: "Transportation",
+          amount: 2900.0,
+          merchant: "Paycheck",
+          date: "2025-03-01",
+          category: "Income",
         },
+
+        // February 2025
         {
           id: "19",
           amount: -45.0,
           merchant: "CVS Pharmacy",
-          date: "2025-06-01",
+          date: "2025-02-28",
           category: "Health & Fitness",
+        },
+        {
+          id: "20",
+          amount: -25.0,
+          merchant: "Starbucks",
+          date: "2025-02-22",
+          category: "Food & Drink",
+        },
+        {
+          id: "21",
+          amount: -180.0,
+          merchant: "Costco",
+          date: "2025-02-18",
+          category: "Shopping",
+        },
+        {
+          id: "22",
+          amount: -65.0,
+          merchant: "Restaurant",
+          date: "2025-02-14",
+          category: "Food & Drink",
+        },
+        {
+          id: "23",
+          amount: 2750.0,
+          merchant: "Direct Deposit",
+          date: "2025-02-01",
+          category: "Income",
+        },
+
+        // January 2025
+        {
+          id: "24",
+          amount: 4000.0,
+          merchant: "Bonus Payment",
+          date: "2025-01-31",
+          category: "Income",
+        },
+        {
+          id: "25",
+          amount: -280.0,
+          merchant: "Rent Payment",
+          date: "2025-01-30",
+          category: "Bills",
+        },
+        {
+          id: "26",
+          amount: -110.0,
+          merchant: "Phone Bill",
+          date: "2025-01-25",
+          category: "Bills",
+        },
+        {
+          id: "27",
+          amount: -55.0,
+          merchant: "Grocery Store",
+          date: "2025-01-20",
+          category: "Food & Drink",
+        },
+        {
+          id: "28",
+          amount: -90.0,
+          merchant: "Gas Station",
+          date: "2025-01-15",
+          category: "Transportation",
+        },
+        {
+          id: "29",
+          amount: -35.0,
+          merchant: "Coffee Shop",
+          date: "2025-01-10",
+          category: "Food & Drink",
+        },
+        {
+          id: "30",
+          amount: 2600.0,
+          merchant: "Salary",
+          date: "2025-01-01",
+          category: "Income",
         },
       ];
 
@@ -297,16 +385,53 @@ function Dashboard() {
       : accountsData.reduce((sum, account) => sum + account.balance, 0);
 
   // Get chart data and current month spending
-  const { trend } = getChartData(bankData, hasRealData);
+  const { chartData, trend } = getChartData(bankData, hasRealData);
+
+  // Prepare monthly spending chart data
+  const monthlySpendingData = {
+    labels: chartData.map((item) => item.name),
+    datasets: [
+      {
+        label: "Monthly Spending",
+        data: chartData.map((item) => item.spending),
+        borderColor: "#3B82F6",
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
 
   const calculateCurrentMonthSpending = () => {
     const transactionsList =
       bankData.transactions.length > 0 ? bankData.transactions : transactions;
-    return transactionsList.reduce(
-      (sum, transaction) =>
-        sum + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0),
-      0
-    );
+
+    // Get current month and year
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // 0-11
+    const currentYear = currentDate.getFullYear();
+
+    return transactionsList.reduce((sum, transaction) => {
+      // Only count spending transactions (negative amounts)
+      if (transaction.amount < 0) {
+        // Parse transaction date
+        const dateParts = transaction.date.split("-");
+        const transactionDate = new Date(
+          parseInt(dateParts[0]),
+          parseInt(dateParts[1]) - 1,
+          parseInt(dateParts[2])
+        );
+
+        // Check if transaction is from current month and year
+        if (
+          transactionDate.getMonth() === currentMonth &&
+          transactionDate.getFullYear() === currentYear
+        ) {
+          return sum + Math.abs(transaction.amount);
+        }
+      }
+      return sum;
+    }, 0);
   };
 
   const currentMonthSpending = calculateCurrentMonthSpending();
@@ -595,10 +720,10 @@ function Dashboard() {
 
             {/* Charts and Data */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-              {/* Spending Chart */}
+              {/* Monthly Spending Trend */}
               <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700 min-h-96">
-                <div className="h-full">
-                  <Chart type="doughnut" data={spendingData} />
+                <div className="h-full flex justify-center">
+                  <Chart type="line" data={monthlySpendingData} />
                 </div>
               </div>
 

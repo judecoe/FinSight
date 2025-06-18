@@ -44,4 +44,5 @@ dist/
 
 # Next.js
 /frontend/.next/
+/frontend/.next/trace
 /frontend/out/
