@@ -4,7 +4,7 @@ A modern personal finance dashboard application built with Next.js, NextAuth.js,
 
 ## 🚀 Check It Out
 
-**[View Live Application](https://finsight-plum.vercel.app)**
+**[View Live Application](https://finsightapp.vercel.app)**
 
 ## Screenshots
 
