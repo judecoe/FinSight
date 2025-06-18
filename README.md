@@ -1,4 +1,4 @@
-# Finance Dashboard
+# FinSight
 
 A modern personal finance dashboard application built with Next.js, NextAuth.js, and Plaid integration.
 
