@@ -81,6 +81,143 @@ export const getSpendingTrend = (chartData) => {
   };
 };
 
+// Mock transactions data (same as used in dashboard)
+const getMockTransactions = () => [
+  {
+    id: "1",
+    amount: -45.23,
+    merchant: "Starbucks",
+    date: "2025-06-15",
+    category: "Food & Drink",
+  },
+  {
+    id: "2",
+    amount: -120.0,
+    merchant: "Gas Station",
+    date: "2025-06-14",
+    category: "Transportation",
+  },
+  {
+    id: "3",
+    amount: 2500.0,
+    merchant: "Direct Deposit",
+    date: "2025-06-13",
+    category: "Income",
+  },
+  {
+    id: "4",
+    amount: -89.99,
+    merchant: "Amazon",
+    date: "2025-06-12",
+    category: "Shopping",
+  },
+  {
+    id: "5",
+    amount: -15.75,
+    merchant: "McDonald's",
+    date: "2025-06-11",
+    category: "Food & Drink",
+  },
+  {
+    id: "6",
+    amount: -60.0,
+    merchant: "Uber",
+    date: "2025-06-10",
+    category: "Transportation",
+  },
+  {
+    id: "7",
+    amount: -200.0,
+    merchant: "Best Buy",
+    date: "2025-06-09",
+    category: "Shopping",
+  },
+  {
+    id: "8",
+    amount: 3000.0,
+    merchant: "Freelance Payment",
+    date: "2025-06-08",
+    category: "Income",
+  },
+  {
+    id: "9",
+    amount: -75.0,
+    merchant: "Gym Membership",
+    date: "2025-06-07",
+    category: "Health & Fitness",
+  },
+  {
+    id: "10",
+    amount: -35.0,
+    merchant: "Subway",
+    date: "2025-06-06",
+    category: "Food & Drink",
+  },
+  {
+    id: "11",
+    amount: -150.0,
+    merchant: "Target",
+    date: "2025-06-05",
+    category: "Shopping",
+  },
+  {
+    id: "12",
+    amount: -20.0,
+    merchant: "Spotify",
+    date: "2025-06-04",
+    category: "Entertainment",
+  },
+  {
+    id: "13",
+    amount: -300.0,
+    merchant: "Electric Company",
+    date: "2025-06-03",
+    category: "Bills",
+  },
+  {
+    id: "14",
+    amount: -50.0,
+    merchant: "Netflix",
+    date: "2025-06-02",
+    category: "Entertainment",
+  },
+  {
+    id: "15",
+    amount: -100.0,
+    merchant: "Walmart",
+    date: "2025-06-01",
+    category: "Shopping",
+  },
+  {
+    id: "16",
+    amount: 4000.0,
+    merchant: "Bonus Payment",
+    date: "2025-06-01",
+    category: "Income",
+  },
+  {
+    id: "17",
+    amount: -25.0,
+    merchant: "Starbucks",
+    date: "2025-06-01",
+    category: "Food & Drink",
+  },
+  {
+    id: "18",
+    amount: -80.0,
+    merchant: "Lyft",
+    date: "2025-06-01",
+    category: "Transportation",
+  },
+  {
+    id: "19",
+    amount: -45.0,
+    merchant: "CVS Pharmacy",
+    date: "2025-06-01",
+    category: "Health & Fitness",
+  },
+];
+
 // Determine if we should use real data or demo data
 export const getChartData = (bankData, isBankConnected) => {
   const hasValidRealData =
@@ -90,14 +227,21 @@ export const getChartData = (bankData, isBankConnected) => {
     ? bankData.summary.monthlySpending
     : getDefaultChartData();
 
-  if (hasValidRealData) {
-    const transactionsList = bankData.transactions;
-    const currentMonthSpending = transactionsList.reduce(
-      (sum, transaction) =>
-        sum + (transaction.amount < 0 ? -transaction.amount : 0),
-      0
-    );
-    chartData[chartData.length - 1].spending = currentMonthSpending;
+  // Calculate current month spending from transactions (same logic as dashboard)
+  const hasRealTransactions = bankData?.transactions?.length > 0;
+  const transactionsList = hasRealTransactions
+    ? bankData.transactions
+    : getMockTransactions();
+  const currentMonthSpendingFromTransactions = transactionsList.reduce(
+    (sum, transaction) =>
+      sum + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0),
+    0
+  );
+
+  // Update the chart data's current month value to match the dashboard calculation
+  if (chartData.length > 0) {
+    chartData[chartData.length - 1].spending =
+      currentMonthSpendingFromTransactions;
   }
 
   const currentMonthSpending = getCurrentMonthSpending(chartData);
